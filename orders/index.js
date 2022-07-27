@@ -33,29 +33,34 @@ async function connect() {
   await channel.assertQueue('ORDER');
 }
 
-connect().then(() => {
-  channel.consume('ORDER', data => {
-    console.log('Consuming ORDER service');
-    const { products, userEmail } = JSON.parse(data.content);
-    createOrder(products, userEmail)
-      .then(newOrder => {
-        channel.ack(data);
-        channel.sendToQueue(
-          'PRODUCT',
-          Buffer.from(JSON.stringify({ newOrder }))
-        );
-      })
-      .catch(err => {
-        console.log(err);
-      });
+connect()
+  .then(() => {
+    channel.consume('ORDER', data => {
+      console.log('Consuming ORDER service');
+      const { products, userEmail } = JSON.parse(data.content);
+      createOrder(products, userEmail)
+        .then(newOrder => {
+          channel.ack(data);
+          channel.sendToQueue(
+            'PRODUCT',
+            Buffer.from(JSON.stringify({ newOrder }))
+          );
+        })
+        .catch(err => {
+          console.log(err);
+        });
+    });
+  })
+  .catch(error => {
+    console.error('Unable to connect to the Rabbit MQ:', error);
+    process.exit(1);
   });
-});
 
 const app = express();
 
 app.use(express.json());
 
-const port = process.env.PORT ?? 3000;
+const port = +process.env.PORT ?? 3003;
 
 app.listen(port, () => {
   console.log(`Orders Service at ${port}`);

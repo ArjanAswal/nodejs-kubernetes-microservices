@@ -14,12 +14,17 @@ async function connect() {
   channel = await connection.createChannel();
   await channel.assertQueue('PRODUCT');
 }
-connect();
+
+connect().catch(error => {
+  console.error('Unable to connect to the Rabbit MQ:', error);
+  process.exit(1);
+});
+
 const app = express();
 
 app.use(express.json());
 
-const port = process.env.PORT ?? 3000;
+const port = +process.env.PORT ?? 3002;
 
 app.listen(port, () => {
   console.log(`Products Service at ${port}`);
